@@ -45,6 +45,23 @@ class OllamaServiceConfig(LLMServiceConfig):
             self.response_format = "json"
 
 
+class OllamaCodeServiceConfig(OllamaServiceConfig):
+    def _configure(self) -> None:
+        super()._configure()
+        
+        shared_code_api_base = self.llm_module_config.code_api_base
+        self.api_base = self._get_str(
+            "code_api_base",
+            shared_code_api_base if shared_code_api_base is not None else self.api_base,
+        )
+
+        shared_code_model = self.llm_module_config.code_model
+        self.model = self._get_str(
+            "code_model",
+            shared_code_model if shared_code_model is not None else self.model,
+        )
+
+
 class OllamaService(CompletionService, EmbeddingService):
     @inject
     def __init__(self, config: OllamaServiceConfig):
@@ -204,3 +221,9 @@ class OllamaService(CompletionService, EmbeddingService):
         with requests.Session() as session:
             with session.post(url, json=payload, stream=stream) as resp:
                 yield resp
+
+
+class OllamaCodeService(OllamaService):
+    @inject
+    def __init__(self, config: OllamaCodeServiceConfig):
+        super().__init__(config)

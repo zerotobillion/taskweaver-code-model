@@ -353,6 +353,7 @@ class CodeGenerator(Role):
                 prompt,
                 use_backup_engine=use_back_up_engine,
                 use_smoother=True,
+                code_generation=True,
             ),
             post_proxy=post_proxy,
             early_stop=early_stop,

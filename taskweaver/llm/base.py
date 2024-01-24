@@ -15,18 +15,37 @@ class LLMModuleConfig(ModuleConfig):
             "api_type",
             "openai",
         )
+        self.code_api_type = self._get_str(
+            "code_api_type",
+            self.api_type,
+        )
         self.embedding_api_type = self._get_str(
             "embedding_api_type",
             "sentence_transformers",
         )
         self.api_base: Optional[str] = self._get_str("api_base", None, required=False)
+        self.code_api_base: Optional[str] = self._get_str(
+            "code_api_base",
+            None,
+            required=False
+        )
         self.api_key: Optional[str] = self._get_str(
             "api_key",
             None,
             required=False,
         )
+        self.code_api_key: Optional[str] = self._get_str(
+            "code_api_key",
+            None,
+            required=False,
+        )
 
         self.model: Optional[str] = self._get_str("model", None, required=False)
+        self.code_model: Optional[str] = self._get_str(
+            "code_model",
+            None,
+            required=False
+        )
         self.backup_model: Optional[str] = self._get_str(
             "backup_model",
             None,

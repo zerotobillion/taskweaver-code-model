@@ -1,5 +1,8 @@
 {
-"llm.api_base": "https://api.openai.com/v1",
-"llm.api_key": "",
-"llm.model": "gpt-4-1106-preview"
+    "llm.api_type": "openai",
+    "llm.api_base": "https://api.openai.com/v1",
+    "llm.api_key": "",
+    "llm.model": "gpt-3.5-turbo",
+    "llm.code_api_base": "https://api.openai.com/v1",
+    "llm.code_model": "gpt-3.5-turbo-16k"
 }

@@ -2,16 +2,16 @@ from typing import Any, Callable, Generator, List, Optional, Type
 
 from injector import Injector, inject
 
-from taskweaver.llm.azure_ml import AzureMLService
+from taskweaver.llm.azure_ml import AzureMLService, AzureMLCodeService
 from taskweaver.llm.base import CompletionService, EmbeddingService, LLMModuleConfig
-from taskweaver.llm.google_genai import GoogleGenAIService
+from taskweaver.llm.google_genai import GoogleGenAIService, GoogleGenAICodeService
 from taskweaver.llm.mock import MockApiService
-from taskweaver.llm.ollama import OllamaService
-from taskweaver.llm.openai import OpenAIService
+from taskweaver.llm.ollama import OllamaService, OllamaCodeService
+from taskweaver.llm.openai import OpenAIService, OpenAICodeService
 from taskweaver.llm.placeholder import PlaceholderEmbeddingService
 from taskweaver.llm.sentence_transformer import SentenceTransformerService
 
-from .qwen import QWenService
+from .qwen import QWenService, QWenCodeService
 from .util import ChatMessageType, format_chat_message
 
 
@@ -33,6 +33,19 @@ class LLMApi(object):
             self._set_completion_service(QWenService)
         else:
             raise ValueError(f"API type {self.config.api_type} is not supported")
+        
+        if self.config.code_api_type in ["openai", "azure", "azure_ad"]:
+            self._set_code_completion_service(OpenAICodeService)
+        elif self.config.code_api_type == "ollama":
+            self._set_code_completion_service(OllamaCodeService)
+        elif self.config.code_api_type == "azure_ml":
+            self._set_code_completion_service(AzureMLCodeService)
+        elif self.config.code_api_type == "google_genai":
+            self._set_code_completion_service(GoogleGenAICodeService)
+        elif self.config.code_api_type == "qwen":
+            self._set_code_completion_service(QWenCodeService)
+        else:
+            raise ValueError(f"Code API type {self.config.code_api_type} is not supported")
 
         if self.config.embedding_api_type in ["openai", "azure", "azure_ad"]:
             self._set_embedding_service(OpenAIService)
@@ -67,6 +80,10 @@ class LLMApi(object):
         self.completion_service: CompletionService = self.injector.get(svc)
         self.injector.binder.bind(svc, to=self.completion_service)
 
+    def _set_code_completion_service(self, svc: Type[CompletionService]) -> None:
+        self.code_completion_service: CompletionService = self.injector.get(svc)
+        self.injector.binder.bind(svc, to=self.code_completion_service)
+
     def _set_embedding_service(self, svc: Type[EmbeddingService]) -> None:
         self.embedding_service: EmbeddingService = self.injector.get(svc)
         self.injector.binder.bind(svc, to=self.embedding_service)
@@ -80,10 +97,12 @@ class LLMApi(object):
         max_tokens: Optional[int] = None,
         top_p: Optional[float] = None,
         stop: Optional[List[str]] = None,
+        code_generation: bool = False,
         **kwargs: Any,
     ) -> ChatMessageType:
         msg: ChatMessageType = format_chat_message("assistant", "")
-        for msg_chunk in self.completion_service.chat_completion(
+        completion_service = self.code_completion_service if code_generation else self.completion_service
+        for msg_chunk in completion_service.chat_completion(
             messages,
             use_backup_engine,
             stream,
@@ -109,10 +128,13 @@ class LLMApi(object):
         top_p: Optional[float] = None,
         stop: Optional[List[str]] = None,
         use_smoother: bool = True,
+        code_generation: bool = False,
         **kwargs: Any,
     ) -> Generator[ChatMessageType, None, None]:
+        completion_service = self.code_completion_service if code_generation else self.completion_service
         def get_generator() -> Generator[ChatMessageType, None, None]:
-            return self.completion_service.chat_completion(
+            nonlocal completion_service
+            return completion_service.chat_completion(
                 messages,
                 use_backup_engine,
                 stream,

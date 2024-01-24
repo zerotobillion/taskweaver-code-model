@@ -43,6 +43,23 @@ class GoogleGenAIServiceConfig(LLMServiceConfig):
         self.top_p = self._get_float("top_p", 0)
 
 
+class GoogleGenAICodeServiceConfig(GoogleGenAIServiceConfig):
+    def _configure(self) -> None:
+        super()._configure()
+
+        shared_code_api_key = self.llm_module_config.code_api_key
+        self.api_key = self._get_str(
+            "code_api_key",
+            shared_code_api_key if shared_code_api_key is not None else self.api_key,
+        )
+
+        shared_code_model = self.llm_module_config.code_model
+        self.model = self._get_str(
+            "code_model",
+            shared_code_model if shared_code_model is not None else self.model,
+        )
+
+
 class GoogleGenAIService(CompletionService, EmbeddingService):
     @inject
     def __init__(self, config: GoogleGenAIServiceConfig):
@@ -174,3 +191,9 @@ class GoogleGenAIService(CompletionService, EmbeddingService):
             task_type="semantic_similarity",
         )
         return embedding_results["embedding"]
+
+
+class GoogleGenAICodeService(GoogleGenAIService):
+    @inject
+    def __init__(self, config: GoogleGenAICodeServiceConfig):
+        super().__init__(config)

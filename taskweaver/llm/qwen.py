@@ -36,6 +36,23 @@ class QWenServiceConfig(LLMServiceConfig):
         )
 
 
+class QWenCodeServiceConfig(QWenServiceConfig):
+    def _configure(self) -> None:
+        super()._configure()
+        
+        shared_code_api_key = self.llm_module_config.code_api_key
+        self.api_key = self._get_str(
+            "code_api_key",
+            shared_code_api_key if shared_code_api_key is not None else self.api_key,
+        )
+
+        shared_code_model = self.llm_module_config.code_model
+        self.model = self._get_str(
+            "code_model",
+            shared_code_model if shared_code_model is not None else self.model,
+        )
+
+
 class QWenService(CompletionService, EmbeddingService):
     dashscope = None
 
@@ -100,3 +117,9 @@ class QWenService(CompletionService, EmbeddingService):
             raise Exception(
                 f"QWen API call failed with status code {resp.status_code} and error message {resp.error}",
             )
+
+
+class QWenCodeService(QWenService):
+    @inject
+    def __init__(self, config: QWenCodeServiceConfig):
+        super().__init__(config)

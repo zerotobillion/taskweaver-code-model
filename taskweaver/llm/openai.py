@@ -103,6 +103,31 @@ class OpenAIServiceConfig(LLMServiceConfig):
         self.seed = self._get_int("seed", 123456)
 
 
+class OpenAICodeServiceConfig(OpenAIServiceConfig):
+    def _configure(self) -> None:
+        super()._configure()
+
+        self.api_type = self.llm_module_config.code_api_type
+
+        shared_code_api_base = self.llm_module_config.code_api_base
+        self.api_base = self._get_str(
+            "code_api_base",
+            shared_code_api_base if shared_code_api_base is not None else self.api_base,
+        )
+
+        shared_code_api_key = self.llm_module_config.code_api_key
+        self.api_key = self._get_str(
+            "code_api_key",
+            shared_code_api_key if shared_code_api_key is not None else self.api_key,
+        )
+
+        shared_code_model = self.llm_module_config.code_model
+        self.model = self._get_str(
+            "code_model",
+            shared_code_model if shared_code_model is not None else self.model,
+        )
+
+
 class OpenAIService(CompletionService, EmbeddingService):
     @inject
     def __init__(self, config: OpenAIServiceConfig):
@@ -340,3 +365,9 @@ class OpenAIService(CompletionService, EmbeddingService):
         raise Exception(
             f"Authentication failed for acquiring AAD token for AAD auth: {error_details}",
         )
+
+
+class OpenAICodeService(OpenAIService):
+    @inject
+    def __init__(self, config: OpenAICodeServiceConfig):
+        super().__init__(config)

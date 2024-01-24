@@ -29,6 +29,23 @@ class AzureMLServiceConfig(LLMServiceConfig):
         )
 
 
+class AzureMLCodeServiceConfig(AzureMLServiceConfig):
+    def _configure(self) -> None:
+        super()._configure()
+
+        shared_code_api_base = self.llm_module_config.code_api_base
+        self.api_base = self._get_str(
+            "code_api_base",
+            shared_code_api_base if shared_code_api_base is not None else self.api_base,
+        )
+
+        shared_code_api_key = self.llm_module_config.code_api_key
+        self.api_key = self._get_str(
+            "code_api_key",
+            shared_code_api_key if shared_code_api_key is not None else self.api_key,
+        )
+
+
 class AzureMLService(CompletionService):
     @inject
     def __init__(self, config: AzureMLServiceConfig):
@@ -95,3 +112,9 @@ class AzureMLService(CompletionService):
 
         # close connection before yielding
         yield format_chat_message("assistant", generation)
+
+
+class AzureMLCodeService(AzureMLService):
+    @inject
+    def __init__(self, config: AzureMLCodeServiceConfig):
+        super().__init__(config)
